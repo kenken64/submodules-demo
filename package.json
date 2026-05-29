@@ -1,0 +1,8 @@
+{
+  "name": "snip-cli",
+  "version": "1.0.0",
+  "description": "Snip — URL shortener CLI client",
+  "bin": {
+    "snip": "cli.js"
+  }
+}
