@@ -1,238 +1,130 @@
-# Multi-Project Git Repo Using Submodules
+# Snip — a Multi-Project Git Submodule Demo
 
-A single Git repository hosting three independent projects — **backend**, **frontend**, and **cli** — each living on its own branch with files at the branch root. The **main** branch aggregates all three as **git submodules**, so they appear as folders under `main` on GitHub while remaining independent branches that teams (or AI agents) can work on in isolation.
+A single Git repository whose pieces are the three layers of **Snip**, a tiny URL
+shortener. The teaching point: **one backend serving an identical API contract to two
+very different clients** — an Angular web app and a terminal CLI.
 
-> Previously these folders were wired up as **git worktrees** (great for parallel local work, but worktrees are local-only and never appear on the remote). They were converted to **submodules** so the folders also show up under `main` on GitHub.
+Each layer lives on its **own branch** (`backend`, `frontend`, `cli`) with files at the
+branch root. The **`main`** branch aggregates all three as **git submodules**, so they
+appear as folders under `main` on GitHub while staying independent branches that teams
+(or AI agents) can work on in isolation.
 
-## Branch Overview
+> These folders started life as **git worktrees** (great for parallel local work, but
+> local-only — they never appear on the remote), then were converted to **submodules**
+> so the folders also show up under `main` on GitHub.
 
-| Branch | Purpose | File(s) at root |
-|--------|---------|-----------------|
-| `main` | Aggregates all projects as submodules | `.gitmodules`, `README.md`, + submodule pointers |
-| `backend` | HTTP server (`GET /api`) plus demo pages | `server.js`, `index2.html`, `index3.html`, `README.md` |
-| `frontend` | Web app(s) that fetch from the backend | `index.html`, `index4.html` |
-| `cli` | CLI tool that prints the backend response | `cli.js` |
+## Snip — the app
+
+| Layer | Branch | Stack | Job |
+|-------|--------|-------|-----|
+| Backend | `backend` | Bun (`Bun.serve`, in-memory `Map`, zero deps) | The API + short-code redirects |
+| Frontend | `frontend` | Angular 19 (standalone, HttpClient) | Paste-a-URL form + links table with hit counts |
+| CLI | `cli` | Node (zero deps, global `fetch`) | `snip add` / `snip ls` / `snip open` |
+
+Both clients consume the **same** contract (backend at `http://localhost:3000`):
+
+| Method | Path | Body | Response |
+|--------|------|------|----------|
+| `POST` | `/api/links` | `{ "url": "https://…" }` | `201` `{ code, url, shortUrl, hits, createdAt }` · `400` on invalid URL |
+| `GET`  | `/api/links` | — | `200` array of all links |
+| `GET`  | `/:code` | — | `302` redirect to the original URL (increments `hits`) · `404` if unknown |
+
+Storage is an in-memory `Map` — restarting the backend clears all links (it's a demo).
 
 ## Disk Layout (main branch)
 
 ```
-worktree-demo/            ← main branch
+submodules-demo/          ← main branch
 ├── .gitmodules           ← maps each folder to a branch of this repo
 ├── README.md
-├── backend/   @ <sha>    ← submodule, tracks branch `backend`
-├── frontend/  @ <sha>    ← submodule, tracks branch `frontend`
-└── cli/       @ <sha>    ← submodule, tracks branch `cli`
+├── backend/   @ <sha>    ← submodule, tracks branch `backend`  (Bun API)
+├── frontend/  @ <sha>    ← submodule, tracks branch `frontend` (Angular app)
+└── cli/       @ <sha>    ← submodule, tracks branch `cli`      (snip CLI)
 ```
 
-Each `@ <sha>` is a *gitlink* — `main` pins each submodule to a specific commit on its branch. In `main`'s tree these show up as `160000 commit` entries, which GitHub renders as clickable folders.
+Each `@ <sha>` is a *gitlink* — `main` pins each submodule to a specific commit on its
+branch. In `main`'s tree these are `160000 commit` entries, which GitHub renders as
+clickable folders.
 
 ## Cloning
 
-Submodule folders are empty after a plain `git clone`. Pull them in one of two ways:
+Submodule folders are empty after a plain `git clone`. Populate them:
 
 ```bash
-# Clone and populate submodules in one step
-git clone --recurse-submodules https://github.com/kenken64/worktree-demo.git
+# Clone and pull submodules in one step
+git clone --recurse-submodules https://github.com/kenken64/submodules-demo.git
 
 # ...or, after a plain clone:
 git submodule update --init --recursive
 ```
 
-## How It Was Built
+## Running Snip (dev)
 
-### Step 1 — Initialize the Repository
-
-```bash
-git init
-```
-
-### Step 2 — Create the `backend` Branch
-
-Create an orphan branch (no parent commit) and add a simple HTTP server.
+Three terminals, from the `main` checkout (after submodules are populated):
 
 ```bash
-git checkout --orphan backend
+# 1 — Backend (http://localhost:3000)
+cd backend && bun start
+
+# 2 — Frontend (http://localhost:4200)
+cd frontend && npm install && npx ng serve
+
+# 3 — CLI (talks to the same backend)
+cd cli
+node cli.js add https://anthropic.com
+node cli.js ls
+node cli.js open <code>
 ```
 
-Create `server.js`:
+Open the web app at `http://localhost:4200`, shorten a URL, then watch the same link
+show up via `node cli.js ls` — one backend, two clients.
 
-```js
-const http = require("http");
-
-const server = http.createServer((req, res) => {
-  if (req.method === "GET" && req.url === "/api") {
-    res.writeHead(200, {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-    });
-    res.end(JSON.stringify({ message: "Hello World" }));
-  } else {
-    res.writeHead(404);
-    res.end("Not found");
-  }
-});
-
-const PORT = 3000;
-server.listen(PORT, () => {
-  console.log(`Backend running on http://localhost:${PORT}/api`);
-});
-```
-
-Stage and commit:
-
-```bash
-git add server.js
-git commit -m "Add backend HTTP server with GET /api endpoint"
-```
-
-### Step 3 — Create the `frontend` Branch
-
-Create another orphan branch and clean up staged files from the previous branch.
-
-```bash
-git checkout --orphan frontend
-git rm --cached server.js
-```
-
-Create `index.html`:
-
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Frontend</title>
-</head>
-<body>
-  <h1 id="output">Loading...</h1>
-  <script>
-    fetch("http://localhost:3000/api")
-      .then(res => res.json())
-      .then(data => {
-        document.getElementById("output").textContent = data.message;
-      })
-      .catch(err => {
-        document.getElementById("output").textContent = "Error: " + err.message;
-      });
-  </script>
-</body>
-</html>
-```
-
-Stage and commit:
-
-```bash
-git add index.html
-git commit -m "Add frontend web app that fetches from backend"
-```
-
-### Step 4 — Create the `cli` Branch
-
-Create a third orphan branch and clean up staged files.
-
-```bash
-git checkout --orphan cli
-git rm --cached index.html
-```
-
-Create `cli.js`:
-
-```js
-const http = require("http");
-
-http.get("http://localhost:3000/api", (res) => {
-  let data = "";
-  res.on("data", (chunk) => (data += chunk));
-  res.on("end", () => {
-    const json = JSON.parse(data);
-    console.log(json.message);
-  });
-}).on("error", (err) => {
-  console.error("Error:", err.message);
-});
-```
-
-Stage and commit:
-
-```bash
-git add cli.js
-git commit -m "Add CLI tool that calls backend and prints response"
-```
-
-> The `backend`, `frontend`, and `cli` branches have since grown additional demo pages
-> (`index2.html`, `index3.html`, `index4.html`) via pull requests.
-
-### Step 5 — Push the Project Branches
-
-```bash
-git remote add origin https://github.com/kenken64/worktree-demo.git
-git push -u origin backend frontend cli
-```
-
-### Step 6 — Create the `main` Branch and Wire Up Submodules
-
-Create an orphan `main` branch, then add each project branch as a submodule of this
-same repository, pinned to its branch:
-
-```bash
-git checkout --orphan main
-git rm --cached -r .          # start main with an empty tree
-
-git submodule add -b backend  https://github.com/kenken64/worktree-demo.git backend
-git submodule add -b frontend https://github.com/kenken64/worktree-demo.git frontend
-git submodule add -b cli      https://github.com/kenken64/worktree-demo.git cli
-
-git add .gitmodules backend frontend cli README.md
-git commit -m "Add backend, frontend, cli as submodules"
-git push -u origin main
-```
-
-The `-b <branch>` flag records the tracked branch in `.gitmodules`, which lets
-`git submodule update --remote` follow that branch later.
-
-### Step 7 — Verify
-
-```bash
-git submodule status
-git ls-tree HEAD        # backend/frontend/cli show as `160000 commit` (gitlinks)
-```
-
-## Working on a Project (team / agent workflow)
+## Working on a project (team / agent workflow)
 
 Each submodule folder is a full checkout of its branch — work in it directly:
 
 ```bash
-cd backend                      # you're now on the `backend` branch
-# ...edit files...
-git add -A
-git commit -m "Update backend"
-git push                        # updates origin/backend
+cd backend                 # you're now on the `backend` branch
+# ...edit, then...
+git add -A && git commit -m "..." && git push   # updates origin/backend
 ```
 
 Then publish the advance by bumping the pointer in `main`:
 
 ```bash
 cd ..
-git submodule update --remote backend          # fast-forward folder to latest origin/backend
-git add backend
-git commit -m "Bump backend submodule"
-git push                                        # updates main on GitHub
+git submodule update --remote backend     # fast-forward the folder to latest origin/backend
+git add backend && git commit -m "Bump backend submodule" && git push
 ```
 
-This pointer-bump is the one extra step submodules add: a project commit and a
+That pointer-bump is the one extra step submodules add: the project commit and the
 superproject commit are recorded separately.
 
-## Running the Projects
+## How the submodule layout was built
 
-From the `main` checkout (after submodules are populated):
+Each project is an orphan branch (independent history, files at root); `main` is an
+orphan branch that wires them in as submodules of this same repo:
 
 ```bash
-# Start the backend
-node backend/server.js
+# one orphan branch per project, each with its own files at the root
+git checkout --orphan backend   # add server.js, package.json …
+git checkout --orphan frontend  # add the Angular project …
+git checkout --orphan cli        # add cli.js, package.json …
+git push -u origin backend frontend cli
 
-# Open the frontend
-open frontend/index.html
-
-# Run the CLI
-node cli/cli.js
+# main aggregates them as submodules pinned to each branch
+git checkout --orphan main
+git rm --cached -r .
+git submodule add -b backend  https://github.com/kenken64/submodules-demo.git backend
+git submodule add -b frontend https://github.com/kenken64/submodules-demo.git frontend
+git submodule add -b cli      https://github.com/kenken64/submodules-demo.git cli
+git add .gitmodules backend frontend cli README.md
+git commit -m "Add backend, frontend, cli as submodules"
+git push -u origin main
 ```
+
+The `-b <branch>` flag records the tracked branch in `.gitmodules`, so
+`git submodule update --remote` can follow it later.
+
+Per-project details live in each submodule's own README (`backend/README.md`,
+`cli/README.md`).
