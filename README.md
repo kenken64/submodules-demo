@@ -37,9 +37,12 @@ Storage is an in-memory `Map` — restarting the backend clears all links (it's 
 submodules-demo/          ← main branch
 ├── .gitmodules           ← maps each folder to a branch of this repo
 ├── README.md
+├── scripts/build-bundle.mjs       ← regenerates the bundle from source branches
+├── .github/workflows/bundle.yml   ← CI that rebuilds the bundle
 ├── backend/   @ <sha>    ← submodule, tracks branch `backend`  (Bun API)
 ├── frontend/  @ <sha>    ← submodule, tracks branch `frontend` (Angular app)
-└── cli/       @ <sha>    ← submodule, tracks branch `cli`      (snip CLI)
+├── cli/       @ <sha>    ← submodule, tracks branch `cli`      (snip CLI)
+└── bundle/    @ <sha>    ← submodule, tracks branch `bundle`   (built whole-app release)
 ```
 
 Each `@ <sha>` is a *gitlink* — `main` pins each submodule to a specific commit on its
@@ -78,6 +81,28 @@ node cli.js open <code>
 
 Open the web app at `http://localhost:4200`, shorten a URL, then watch the same link
 show up via `node cli.js ls` — one backend, two clients.
+
+## The whole app, bundled
+
+The `bundle/` submodule (branch `bundle`) is a **generated release**: a single Bun
+server that serves the API, the short-code redirects, **and** the built Angular web UI,
+with the CLI alongside — the entire app in one folder, one process.
+
+```bash
+cd bundle
+bun start            # http://localhost:3000 — web UI + API + redirects
+```
+
+It's regenerated from the source branches by a build script (and a GitHub Action):
+
+```bash
+node scripts/build-bundle.mjs          # rebuild + commit locally
+node scripts/build-bundle.mjs --push   # rebuild + publish bundle branch + bump pointer
+```
+
+This shows a second use of submodules: source layers live on their own branches, while
+the assembled, built artifact lives on a `bundle` branch — the same idea as a
+`gh-pages` release branch. See `bundle/README.md` for details.
 
 ## Working on a project (team / agent workflow)
 
