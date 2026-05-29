@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "description": "Snip — the whole app bundled: one Bun server serving the API, short-code redirects, and the built Angular web UI. CLI included.",
-  "type": "module",
   "scripts": {
     "start": "bun server.js"
   }
