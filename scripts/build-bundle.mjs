@@ -9,7 +9,7 @@
 //
 // Runs the same locally (Windows/macOS/Linux) and in CI (.github/workflows/bundle.yml).
 
-import { execFileSync } from 'node:child_process';
+import { execFileSync, execSync } from 'node:child_process';
 import { cpSync, rmSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
@@ -21,6 +21,10 @@ const run = (cmd, args, opts = {}) =>
   execFileSync(cmd, args, { cwd: ROOT, stdio: 'inherit', ...opts });
 const capture = (cmd, args, opts = {}) =>
   execFileSync(cmd, args, { cwd: ROOT, encoding: 'utf8', ...opts }).trim();
+// npm must go through a shell so Windows resolves npm.cmd; use a single command string
+// (execSync) to dodge the execFile+shell args deprecation. The quoted path has no spaces.
+const FE = join(ROOT, 'frontend');
+const npm = (argStr) => execSync(`npm ${argStr}`, { cwd: ROOT, stdio: 'inherit' });
 
 const BUNDLE = join(ROOT, 'bundle');
 const DIST = join(ROOT, 'frontend', 'dist', 'snip-frontend', 'browser');
@@ -29,8 +33,8 @@ console.log('> Updating source submodules to their branch tips...');
 run('git', ['submodule', 'update', '--init', '--remote', 'backend', 'frontend', 'cli']);
 
 console.log('> Building the Angular frontend...');
-run('npm', ['--prefix', join(ROOT, 'frontend'), 'install', '--no-audit', '--no-fund']);
-run('npm', ['--prefix', join(ROOT, 'frontend'), 'run', 'build']);
+npm(`--prefix "${FE}" install --no-audit --no-fund`);
+npm(`--prefix "${FE}" run build`);
 if (!existsSync(join(DIST, 'index.html'))) {
   throw new Error('ng build output not found at ' + DIST);
 }
@@ -63,20 +67,25 @@ writeFileSync(
   ) + '\n',
 );
 
-// Commit the bundle submodule (no-op if nothing changed)
-if (capture('git', ['-C', BUNDLE, 'status', '--porcelain'])) {
-  run('git', ['-C', BUNDLE, 'add', '-A']);
+// Commit the bundle submodule (idempotent: git commit errors when nothing is staged,
+// and the hourly CI usually finds nothing changed, so guard on the staged diff).
+run('git', ['-C', BUNDLE, 'add', '-A']);
+if (capture('git', ['-C', BUNDLE, 'diff', '--cached', '--name-only'])) {
   run('git', ['-C', BUNDLE, 'commit', '-m', 'Rebuild bundle from source branches']);
   if (PUSH) run('git', ['-C', BUNDLE, 'push', 'origin', 'HEAD:bundle']);
+  console.log('> bundle updated.');
 } else {
   console.log('> bundle unchanged.');
 }
 
 // Bump the pointers in the superproject (bundle + any advanced source submodules)
-if (capture('git', ['status', '--porcelain', '--', 'backend', 'frontend', 'cli', 'bundle'])) {
-  run('git', ['add', '--', 'backend', 'frontend', 'cli', 'bundle']);
+run('git', ['add', '--', 'backend', 'frontend', 'cli', 'bundle']);
+if (capture('git', ['diff', '--cached', '--name-only', '--', 'backend', 'frontend', 'cli', 'bundle'])) {
   run('git', ['commit', '-m', 'Bump submodule pointers (bundle release)']);
   if (PUSH) run('git', ['push']);
+  console.log('> superproject pointers bumped.');
+} else {
+  console.log('> superproject pointers unchanged.');
 }
 
 console.log(
