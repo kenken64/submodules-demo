@@ -1,186 +1,46 @@
-# Multi-Project Git Repo Using Worktrees
+# Snip — Backend (Bun)
 
-A single Git repository hosting three independent projects — **backend**, **frontend**, and **cli** — each living on its own orphan branch and checked out as a separate worktree directory.
+The API for **Snip**, a tiny URL shortener. A single `Bun.serve()` process holding an
+in-memory `Map<code, { url, hits, createdAt }>`. **Zero dependencies.** Restarting the
+server clears all links (by design — this is a demo, not a database).
 
-## Disk Layout
+This is the one backend that both clients — the Angular web app and the `snip` CLI —
+talk to through the identical contract below.
 
-```
-git-demo/
-├── worktree/    ← backend branch  (server.js)
-├── frontend/    ← frontend branch (index.html)
-└── cli/         ← cli branch      (cli.js)
-```
-
-## Step-by-Step Setup
-
-### Step 1 — Initialize the Repository
+## Run
 
 ```bash
-git init
+bun start          # bun run server.js
+# or, auto-reload while editing:
+bun run dev        # bun --watch server.js
 ```
 
-### Step 2 — Create the `backend` Branch
+Listens on `http://localhost:3000` (override with `PORT`; set the public origin used in
+`shortUrl` with `BASE_URL`).
 
-Create an orphan branch (no parent commit) and add a simple HTTP server.
+## API
+
+| Method | Path | Body | Response |
+|--------|------|------|----------|
+| `POST` | `/api/links` | `{ "url": "https://…" }` | `201` `{ code, url, shortUrl, hits, createdAt }` · `400` if the URL is missing/invalid |
+| `GET`  | `/api/links` | — | `200` array of all links |
+| `GET`  | `/:code` | — | `302` redirect to the original URL, increments `hits` · `404` if unknown |
+
+Short codes are 6-character base62, generated with `crypto.getRandomValues`.
+CORS is open (`Access-Control-Allow-Origin: *`) with `OPTIONS` preflight handling so the
+browser client can call it.
+
+## Examples
 
 ```bash
-git checkout --orphan backend
-```
+# create
+curl -X POST localhost:3000/api/links \
+  -H 'content-type: application/json' \
+  -d '{"url":"https://anthropic.com"}'
 
-Create `server.js`:
+# list
+curl localhost:3000/api/links
 
-```js
-const http = require("http");
-
-const server = http.createServer((req, res) => {
-  if (req.method === "GET" && req.url === "/api") {
-    res.writeHead(200, {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-    });
-    res.end(JSON.stringify({ message: "Hello World" }));
-  } else {
-    res.writeHead(404);
-    res.end("Not found");
-  }
-});
-
-const PORT = 3000;
-server.listen(PORT, () => {
-  console.log(`Backend running on http://localhost:${PORT}/api`);
-});
-```
-
-Stage and commit:
-
-```bash
-git add server.js
-git commit -m "Add backend HTTP server with GET /api endpoint"
-```
-
-### Step 3 — Create the `frontend` Branch
-
-Create another orphan branch and clean up staged files from the previous branch.
-
-```bash
-git checkout --orphan frontend
-git rm --cached server.js
-```
-
-Create `index.html`:
-
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Frontend</title>
-</head>
-<body>
-  <h1 id="output">Loading...</h1>
-  <script>
-    fetch("http://localhost:3000/api")
-      .then(res => res.json())
-      .then(data => {
-        document.getElementById("output").textContent = data.message;
-      })
-      .catch(err => {
-        document.getElementById("output").textContent = "Error: " + err.message;
-      });
-  </script>
-</body>
-</html>
-```
-
-Stage and commit:
-
-```bash
-git add index.html
-git commit -m "Add frontend web app that fetches from backend"
-```
-
-### Step 4 — Create the `cli` Branch
-
-Create a third orphan branch and clean up staged files.
-
-```bash
-git checkout --orphan cli
-git rm --cached index.html
-```
-
-Create `cli.js`:
-
-```js
-const http = require("http");
-
-http.get("http://localhost:3000/api", (res) => {
-  let data = "";
-  res.on("data", (chunk) => (data += chunk));
-  res.on("end", () => {
-    const json = JSON.parse(data);
-    console.log(json.message);
-  });
-}).on("error", (err) => {
-  console.error("Error:", err.message);
-});
-```
-
-Stage and commit:
-
-```bash
-git add cli.js
-git commit -m "Add CLI tool that calls backend and prints response"
-```
-
-### Step 5 — Switch Back to `backend`
-
-```bash
-git checkout backend
-```
-
-### Step 6 — Create Worktrees
-
-Check out the `frontend` and `cli` branches as separate directories alongside the main worktree.
-
-```bash
-git worktree add ../frontend frontend
-git worktree add ../cli cli
-```
-
-### Step 7 — Verify
-
-```bash
-git worktree list
-git log --all --oneline --decorate
-```
-
-Expected output:
-
-```
-/path/to/git-demo/worktree  e99039a [backend]
-/path/to/git-demo/frontend  b227a4d [frontend]
-/path/to/git-demo/cli       460b313 [cli]
-```
-
-## Running the Projects
-
-**Start the backend:**
-
-```bash
-cd worktree
-node server.js
-```
-
-**Open the frontend:**
-
-```bash
-cd frontend
-open index.html    # or just open the file in a browser
-```
-
-**Run the CLI:**
-
-```bash
-cd cli
-node cli.js
+# follow a short code (prints the 302 + Location)
+curl -i localhost:3000/<code>
 ```
