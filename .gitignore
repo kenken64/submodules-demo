@@ -1,4 +1,0 @@
-# These directories are git worktrees, not tracked content on main.
-/backend/
-/frontend/
-/cli/
