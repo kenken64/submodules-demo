@@ -25,6 +25,7 @@ async function add(url) {
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) return fail(data.error ?? `Request failed (${res.status})`);
+  if (!data.shortUrl) return fail("Unexpected response from server");
   console.log(data.shortUrl);
 }
 
@@ -32,6 +33,7 @@ async function ls() {
   const res = await fetch(`${API}/api/links`);
   if (!res.ok) return fail(`Request failed (${res.status})`);
   const links = await res.json();
+  if (!Array.isArray(links)) return fail("Unexpected response from server");
   if (links.length === 0) {
     console.log("No links yet. Add one with: snip add <url>");
     return;
@@ -46,8 +48,11 @@ async function open(code) {
   if (!code) return fail("Usage: snip open <code>");
   // Ask the backend where the code points; don't follow the redirect ourselves.
   const res = await fetch(`${API}/${code}`, { redirect: "manual" });
+  if (res.status === 404) return fail(`Unknown short code: ${code}`);
   const target = res.headers.get("location");
-  if (!target) return fail(`Unknown short code: ${code}`);
+  if (res.status !== 302 || !target) {
+    return fail(`Unexpected response (${res.status}) for code: ${code}`);
+  }
   launchBrowser(target);
   console.log(`Opening ${target}`);
 }
