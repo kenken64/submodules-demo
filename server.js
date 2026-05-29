@@ -3,6 +3,8 @@
 
 const PORT = Number(Bun.env.PORT ?? 3000);
 const BASE_URL = Bun.env.BASE_URL ?? `http://localhost:${PORT}`;
+// When set (e.g. in the bundled release), also serve a built web app from this dir.
+const PUBLIC_DIR = Bun.env.PUBLIC_DIR ?? null;
 
 /** @type {Map<string, { url: string, hits: number, createdAt: string }>} */
 const links = new Map();
@@ -46,6 +48,13 @@ function toLink(code) {
   return { code, url, shortUrl: `${BASE_URL}/${code}`, hits, createdAt };
 }
 
+// Serve a static file from PUBLIC_DIR (the built web app), or null if not applicable.
+async function serveStatic(pathname) {
+  if (!PUBLIC_DIR) return null;
+  const file = Bun.file(PUBLIC_DIR + (pathname === "/" ? "/index.html" : pathname));
+  return (await file.exists()) ? new Response(file) : null;
+}
+
 const server = Bun.serve({
   port: PORT,
   async fetch(req) {
@@ -77,6 +86,12 @@ const server = Bun.serve({
     // List every link with its hit count
     if (method === "GET" && pathname === "/api/links") {
       return json([...links.keys()].map(toLink));
+    }
+
+    // Serve the bundled web app, if configured (an existing asset wins over a code)
+    if (method === "GET") {
+      const asset = await serveStatic(pathname);
+      if (asset) return asset;
     }
 
     // Redirect a short code to its original URL, counting the hit
