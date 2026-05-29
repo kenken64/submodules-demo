@@ -30,6 +30,10 @@ export class AppComponent {
   shorten(): void {
     const url = this.url.trim();
     if (!url) return;
+    if (!this.isValidHttpUrl(url)) {
+      this.error.set('Enter a valid http(s) URL');
+      return;
+    }
     this.error.set(null);
     this.snip.create(url).subscribe({
       next: (link) => {
@@ -39,5 +43,14 @@ export class AppComponent {
       },
       error: (e) => this.error.set(e?.error?.error ?? 'Failed to shorten URL'),
     });
+  }
+
+  private isValidHttpUrl(value: string): boolean {
+    try {
+      const u = new URL(value);
+      return u.protocol === 'http:' || u.protocol === 'https:';
+    } catch {
+      return false;
+    }
   }
 }
