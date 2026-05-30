@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# snip — convenience wrapper for the Snip CLI (POSIX shells: Linux, macOS, Git Bash).
+# Lets you run `./snip add <url>` instead of `node cli.js add <url>`.
+# Put this folder on PATH to call `snip` from anywhere.
+# Point at another backend with:  SNIP_API=http://host:port snip ls
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec node "$DIR/cli.js" "$@"
