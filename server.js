@@ -2,7 +2,14 @@
 // Storage is an in-memory Map (zero dependencies). Restarting clears all links.
 
 const PORT = Number(Bun.env.PORT ?? 3000);
-const BASE_URL = Bun.env.BASE_URL ?? `http://localhost:${PORT}`;
+// Base for the short links we hand out. Prefer an explicit BASE_URL; otherwise, when
+// running on Railway, use its injected public domain so links point at the real host
+// instead of localhost. Falls back to localhost for local dev.
+const BASE_URL =
+  Bun.env.BASE_URL ??
+  (Bun.env.RAILWAY_PUBLIC_DOMAIN
+    ? `https://${Bun.env.RAILWAY_PUBLIC_DOMAIN}`
+    : `http://localhost:${PORT}`);
 // When set (e.g. in the bundled release), also serve a built web app from this dir.
 const PUBLIC_DIR = Bun.env.PUBLIC_DIR ?? null;
 

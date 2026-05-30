@@ -1,0 +1,9 @@
+# Keep the image lean and reproducible. Everything the server needs (server.js,
+# public/, .env, package.json) is copied; these are not needed at runtime.
+.git
+.gitignore
+node_modules
+npm-debug.log
+Dockerfile
+.dockerignore
+README.md
