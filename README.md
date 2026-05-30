@@ -104,6 +104,19 @@ This shows a second use of submodules: source layers live on their own branches,
 the assembled, built artifact lives on a `bundle` branch — the same idea as a
 `gh-pages` release branch. See `bundle/README.md` for details.
 
+### Container image
+
+The bundle ships a `Dockerfile`, so the whole app runs as one container. CI
+(`.github/workflows/docker.yml`) builds it from the pinned bundle and pushes it to the
+GitHub Container Registry on every `main` update:
+
+```bash
+docker run --rm -p 3000:3000 ghcr.io/kenken64/submodules-demo:latest   # http://localhost:3000
+```
+
+It's Railway-ready too — the server honours the injected `$PORT` and uses
+`RAILWAY_PUBLIC_DOMAIN` for correct short links. See `bundle/README.md` for deploy steps.
+
 ## Working on a project (team / agent workflow)
 
 Each submodule folder is a full checkout of its branch — work in it directly:
