@@ -160,6 +160,23 @@ cd frontend && npm i && npx ng serve     # :4200 — shorten a URL in the browse
 cd cli      && node cli.js ls            # the CLI sees the same link
 ```
 
+Or let the agent do the launching — an optional **run-it prompt**:
+
+```text
+In the snip-demo main checkout (submodules populated), start Snip and smoke-test it:
+
+1. Start the backend in the background: cd backend && bun start (port 3000).
+2. Start the frontend in the background: cd frontend && npm install && npx ng serve
+   (port 4200).
+3. Wait until both respond (GET http://localhost:3000/api/links and
+   http://localhost:4200).
+4. Smoke test: POST a link to /api/links, confirm it appears in GET /api/links,
+   request its /:code once and confirm hits incremented; then run
+   cd cli && node cli.js ls and confirm the same link shows up there.
+5. Leave both servers running and report: the URLs to open, the smoke-test results,
+   and how to stop the background processes.
+```
+
 ## Step 5 — The generated `bundle` branch + build script
 
 Second submodule idea: a **release branch** (same spirit as `gh-pages`). One Bun
