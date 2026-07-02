@@ -285,6 +285,25 @@ file); watch both runs and report the results and image tags.
 (If the pull is denied, make the package public in its settings — first GHCR push is
 private by default.)
 
+Last touch — an optional prompt to **teach coding agents the repo's rules**:
+
+```text
+On main in the snip-demo checkout, write CLAUDE.md at the repo root (Claude Code) and
+mirror it to .github/copilot-instructions.md (GitHub Copilot) — one concise rule set
+in both files, each noting to keep the other in sync. Derive it from the repo itself
+(READMEs, build script, workflows) and keep it short: what the repo is (superproject
++ one branch per layer), a layout/tech-stack table, the API contract (change it
+everywhere or nowhere), key commands, the edit -> push -> pointer-bump workflow, and
+Do/Don't rules covering the non-obvious traps: bundle/ is generated output (never
+hand-edit), cli.js stays CommonJS (no "type":"module" near it), the Angular build
+output path is load-bearing, storage is in-memory by design, bundle CI is
+schedule-only on purpose, and docker CI's paths filter watches the bundle GITLINK,
+not files. Commit and push on main.
+```
+
+**Verify:** start a fresh agent session in the repo — it should already know the
+rules (try asking it whether it may edit `bundle/server.js`).
+
 ---
 
 ## The daily workflow
