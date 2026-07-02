@@ -23,6 +23,25 @@ one repo ──┬── backend    Bun API server (zero deps, in-memory Map)
            └── main       superproject: .gitmodules + build script + CI
 ```
 
+> **There is no scaffolding step.** You never `mkdir` this layout. Each branch keeps
+> its files at the branch **root** (`server.js`, not `backend/server.js`), and the
+> folder structure only exists on a `main` checkout — git creates it when the
+> submodules are mounted. Don't pre-create `backend/`, `frontend/`, `cli/`, or
+> `bundle/` as ordinary folders; Step 4's `git submodule add` needs those paths free.
+
+Where each piece of a finished `main` checkout comes from:
+
+```
+snip-demo/
+├── backend/    server.js, package.json      ← mounted in Step 4 · written in Step 1
+├── frontend/   src/, angular.json           ← mounted in Step 4 · written in Step 2
+├── cli/        cli.js, snip wrappers        ← mounted in Step 4 · written in Step 3
+├── bundle/     server.js, public/, Dockerfile ← mounted + generated in Step 5
+├── .gitmodules, README.md                   ← Step 4
+├── scripts/build-bundle.mjs                 ← Step 5
+└── .github/workflows/{bundle,docker}.yml    ← Step 6
+```
+
 The app's teaching point: **one backend, two very different clients** (web + terminal)
 consuming this identical contract:
 
