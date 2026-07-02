@@ -3,8 +3,11 @@
 <!-- Keep in sync with /CLAUDE.md (same rules, Claude Code's location). -->
 
 Rules for working in this repo. It's **Snip** — a tiny URL shortener demoing a
-git-submodule architecture: `main` is a superproject; each app layer is a submodule
-pinned to a branch of `kenken64/worktree-demo` (not this repo — historical quirk).
+git-submodule architecture. This `main` branch is the **docs-only starter** (the
+tutorial in `docs/` plus these instructions); the **`solution` branch** holds the
+finished superproject, where each app layer is a submodule pinned to a branch of
+`kenken64/worktree-demo` (not this repo — historical quirk). Everything below
+describes that finished architecture.
 
 ## Layout & tech stack
 
@@ -54,7 +57,6 @@ node scripts/build-bundle.mjs [--push]    # regenerate bundle (+ publish with --
 - Keep `build-bundle.mjs` idempotent (guard every commit on a non-empty staged diff —
   hourly CI reruns it) and cross-platform (npm must go through a shell for Windows).
 - Update `docs/prompt-tutorial.md` when the architecture or contract changes.
-- Keep the `solution` branch fast-forwarded to `main` when docs change.
 - Keep this file in sync with `/CLAUDE.md`.
 
 ## Don't
