@@ -101,6 +101,40 @@ git push -u origin frontend
 **Verify:** `npx ng build` passes. (Running it against the backend gets easy in
 Step 4, when the branches sit side by side.)
 
+Want it to look designed, not default? An optional **design-pass prompt** that
+borrows the look and feel of [lovable.dev](https://lovable.dev/) — the vibe, not the
+brand (no Lovable logo, name, or copy in your UI):
+
+```text
+On the frontend branch of snip-demo, give the Snip UI a real design language borrowed
+from https://lovable.dev/ (borrow the look and feel only — never their logo, name, or
+marketing copy).
+
+1. If you have web access, open https://lovable.dev/ and study its visual language.
+   Otherwise work from this summary of it: a dark, minimal page — near-black
+   background with a soft warm gradient glow (coral/pink/orange) behind the hero; one
+   bold centered headline over a short muted subline; a large, pill-rounded,
+   chat-style input as the absolute centerpiece with the primary action attached to
+   it; content below as generously rounded cards on subtle borders; clean sans-serif
+   type; lots of breathing room.
+
+2. Write design.md at the branch root, capturing that language as concrete reusable
+   tokens: background / surface / text / muted colors, the accent gradient, font
+   stack and type scale, spacing, border radii, borders + shadows + glow, and a short
+   mapping of each Snip element onto the system — page header as the hero, the URL
+   form as the chat-style input, result and error notices, the links table as a
+   card. Keep it compact: design.md is now the source of truth to paste into any
+   future styling prompt.
+
+3. Restyle the Angular app to match design.md — CSS only (styles.css,
+   app.component.css, template classes), no new dependencies, no functional changes.
+
+Confirm npx ng build still passes, then commit and push to the frontend branch.
+```
+
+**Verify:** `npx ng serve` — dark page, gradient glow, the form reads as a chat-style
+hero input, and `design.md` sits at the branch root ready to reuse.
+
 ## Step 3 — CLI, on orphan branch `cli`
 
 ```text
