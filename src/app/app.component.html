@@ -1,42 +1,49 @@
 <main>
-  <h1>Snip</h1>
-  <p class="sub">Paste a URL, get a short link — the same API the CLI uses.</p>
+  <div class="glow" aria-hidden="true"></div>
 
-  <form (ngSubmit)="shorten()">
+  <section class="hero">
+    <h1>Snip</h1>
+    <p class="sub">Paste a URL, get a short link — the same API the CLI uses.</p>
+  </section>
+
+  <form class="composer" (ngSubmit)="shorten()">
     <input
+      class="composer-input"
       type="url"
       name="url"
       placeholder="https://example.com/very/long/link"
       [(ngModel)]="url"
       required
     />
-    <button type="submit">Shorten</button>
+    <button class="composer-submit" type="submit">Shorten</button>
   </form>
 
   @if (lastShort(); as short) {
-    <p class="result">
+    <p class="notice result">
       Short link:
       <a [href]="short" target="_blank" rel="noopener">{{ short }}</a>
     </p>
   }
   @if (error(); as err) {
-    <p class="error">{{ err }}</p>
+    <p class="notice error">{{ err }}</p>
   }
 
-  <table>
-    <thead>
-      <tr><th>Short</th><th>Original</th><th>Hits</th></tr>
-    </thead>
-    <tbody>
-      @for (link of links(); track link.code) {
-        <tr>
-          <td><a [href]="link.shortUrl" target="_blank" rel="noopener">{{ link.code }}</a></td>
-          <td class="orig" [title]="link.url">{{ link.url }}</td>
-          <td>{{ link.hits }}</td>
-        </tr>
-      } @empty {
-        <tr><td colspan="3" class="empty">No links yet.</td></tr>
-      }
-    </tbody>
-  </table>
+  <div class="card">
+    <table>
+      <thead>
+        <tr><th>Short</th><th>Original</th><th>Hits</th></tr>
+      </thead>
+      <tbody>
+        @for (link of links(); track link.code) {
+          <tr>
+            <td><a [href]="link.shortUrl" target="_blank" rel="noopener">{{ link.code }}</a></td>
+            <td class="orig" [title]="link.url">{{ link.url }}</td>
+            <td>{{ link.hits }}</td>
+          </tr>
+        } @empty {
+          <tr><td colspan="3" class="empty">No links yet.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
 </main>
