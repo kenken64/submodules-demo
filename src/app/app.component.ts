@@ -23,7 +23,7 @@ export class AppComponent {
   refresh(): void {
     this.snip.list().subscribe({
       next: (links) => this.links.set(links),
-      error: () => this.error.set('Cannot reach backend at http://localhost:3000'),
+      error: () => this.error.set('Cannot reach backend'),
     });
   }
 

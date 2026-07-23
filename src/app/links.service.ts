@@ -13,7 +13,10 @@ export interface Link {
 @Injectable({ providedIn: 'root' })
 export class LinksService {
   private readonly http = inject(HttpClient);
-  private readonly api = 'http://localhost:3000';
+  // Same-origin API: the bundled release serves this app and the API from one
+  // host. In dev (`ng serve` on :4200), proxy.conf.json forwards /api to the
+  // backend on :3000.
+  private readonly api = '';
 
   list(): Observable<Link[]> {
     return this.http.get<Link[]>(this.api + '/api/links');
