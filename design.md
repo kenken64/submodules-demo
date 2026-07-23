@@ -30,8 +30,9 @@ prompt instead of re-describing the system.
 
 ## Glow
 
-A soft, blurred radial wash of the accent gradient sits behind the hero only —
-not tiled, not repeated elsewhere:
+A soft, blurred radial wash of the accent gradient spans the **full viewport
+width** behind the hero (a fixed, full-width band at the top of the page) —
+not confined to the content column, not tiled, not repeated elsewhere:
 
 ```css
 --glow: radial-gradient(60% 50% at 50% 0%, rgba(255, 107, 94, 0.35), rgba(255, 79, 163, 0.18) 45%, transparent 75%);
