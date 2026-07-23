@@ -61,6 +61,37 @@ repo** (create it now, no README). Optional: Docker, `gh` CLI.
 In every prompt, replace `<REPO_URL>` with your repo's URL, e.g.
 `https://github.com/you/snip-demo.git`.
 
+## Routing prompts to models (spend tokens where they matter)
+
+The six prompts are not equally hard. The mechanical, fully-specified ones run fine
+on cheap/fast models; the ones with subtle git state, idempotency, or CI semantics
+are where a strong model earns its tokens. If your agent has an **Auto** router, it's
+a decent default — but you can do better by picking per prompt:
+
+| Prompt | Suggested tier | Examples* | Why |
+|--------|---------------|-----------|-----|
+| Step 1 — Backend | Mid | Sonnet 4.5, GPT-5.4 mini, Gemini Flash | One file, contract fully spelled out |
+| Step 2 — Frontend | Mid | Sonnet 4.5, GPT-5.4 mini, Gemini Flash | Scaffold + one component, tight spec |
+| Step 2 — Design pass | Mid–Strong | Sonnet 5, Gemini Pro | Taste and judgment, not just spec-following |
+| Step 3 — CLI | **Fast/cheap** | Haiku 4.5, Raptor mini, GPT-5 mini, Gemini Flash | Small and mechanical; the prompt pins every detail |
+| Step 4 — Superproject | **Strong** | Sonnet 5, GPT-5.4, Gemini Pro | Git plumbing + submodule semantics; failures here are confusing to unwind |
+| Step 4 — Run-it smoke test | Fast/cheap | Haiku 4.5, Raptor mini | Just launches servers and curls them |
+| Step 5 — build-bundle.mjs | **Strong** | Sonnet 5, GPT-5.4, Gemini Pro | Idempotency guards, cross-platform shelling, detached-HEAD pushes — easiest script to get subtly wrong |
+| Step 6 — CI workflows | **Strong** | Sonnet 5, GPT-5.4, Gemini Pro | Actions semantics (the gitlink `paths` filter, schedule-only triggers) are non-obvious |
+| Step 6 — CLAUDE.md rules | Fast/cheap–Mid | Haiku 4.5, Sonnet 4.5 | Summarizing docs that already exist |
+
+\* Model names rot fast — pick by **tier**, not by name. Whatever your tool offers as
+its current frontier, mid, and mini/flash options slots into this table.
+
+Two rules of thumb:
+
+- **Escalate on failure, not on spec.** Start each prompt at the suggested tier. If
+  the verify check fails twice, retry that step one tier up instead of burning cheap
+  tokens on a debugging loop.
+- **Cheap models love pinned specs.** These prompts already fix branch names, file
+  names, and the API contract — that's exactly what small models need to succeed, so
+  don't pay frontier prices for Steps 1–3.
+
 ---
 
 ## Step 1 — Backend, on branch `backend`
