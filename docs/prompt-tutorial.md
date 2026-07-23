@@ -131,7 +131,8 @@ marketing copy).
 
 1. If you have web access, open https://lovable.dev/ and study its visual language.
    Otherwise work from this summary of it: a dark, minimal page — near-black
-   background with a soft warm gradient glow (coral/pink/orange) behind the hero; one
+   background with a soft warm gradient glow (coral/pink/orange) behind the hero
+   that spans the FULL viewport width, not just the centered content column; one
    bold centered headline over a short muted subline; a large, pill-rounded,
    chat-style input as the absolute centerpiece with the primary action attached to
    it; content below as generously rounded cards on subtle borders; clean sans-serif
@@ -147,12 +148,17 @@ marketing copy).
 
 3. Restyle the Angular app to match design.md — CSS only (styles.css,
    app.component.css, template classes), no new dependencies, no functional changes.
+   Get the glow right: it must be a fixed, full-width band at the top of the page
+   (position: fixed; left/right: 0; pointer-events: none), NOT an absolutely
+   positioned box inside the max-width content column — otherwise on wide screens
+   the gradient washes only the middle strip instead of the whole hero.
 
 Confirm npx ng build still passes, then commit and push to the frontend branch.
 ```
 
-**Verify:** `npx ng serve` — dark page, gradient glow, the form reads as a chat-style
-hero input, and `design.md` sits at the branch root ready to reuse.
+**Verify:** `npx ng serve` — dark page, gradient glow spanning the full viewport
+width (check on a wide window), the form reads as a chat-style hero input, and
+`design.md` sits at the branch root ready to reuse.
 
 ## Step 3 — CLI, on orphan branch `cli`
 
