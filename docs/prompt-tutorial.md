@@ -362,3 +362,9 @@ the bundle rebuild then triggers the Docker workflow automatically.
 > Want prompts that pin down every detail (exact styling, error strings, demo
 > scripts, README contents)? The first version of this tutorial did — see this file
 > at commit `5da0288`.
+
+## Where to next
+
+Ready to put Snip online? [Deploying Snip to Railway](railway-deployment.md) walks
+through it screenshot by screenshot — including why a deploy from `main` fails on
+purpose and how switching the source to the `bundle` branch fixes it.
