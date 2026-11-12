@@ -1,6 +1,6 @@
 # Create Developer AI Agents with OpenBot
 
-Build a four-agent development team in [OpenBot](https://openbot.com), put the
+Build a four-agent development team in [OpenBot](https://openbot.run), put the
 agents in one shared channel, and hand them the [Snip prompt
 tutorial](prompt-tutorial.md) in two coordinated messages.
 
@@ -34,7 +34,7 @@ By the end you will have:
 
 ## Step 1 — Install OpenBot
 
-1. Open [openbot.com](https://openbot.com) and click **Download for macOS** (or the
+1. Open [openbot.run](https://openbot.run) and click **Download for macOS** (or the
    download for your platform).
 
    ![OpenBot landing page with the Download for macOS button](openbot-screens/01-openbot-landing.png)
@@ -667,4 +667,4 @@ questions.
   API contract, branch model, and model-routing guidance.
 - [Railway deployment guide](railway-deployment.md) — deploying the generated
   `bundle` branch and verifying the public URL.
-- [OpenBot](https://openbot.com) — download and product documentation.
+- [OpenBot](https://openbot.run) — download and product documentation.
